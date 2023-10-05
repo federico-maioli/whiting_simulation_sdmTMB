@@ -1,0 +1,123 @@
+---
+title: "Simulation Withing"
+author: "Federico Maioli"
+format: html
+editor: visual
+---
+
+## Load the libraries
+
+```{r}
+library(tidyverse)
+library(tidylog)
+library(sdmTMB)
+library(patchwork)
+```
+
+## Simulate the dataset
+
+```{r}
+set.seed(99)
+
+# true data
+true_data <- data.frame(
+  X = runif(1000), Y = runif(1000), # coordinates
+  b1 = rnorm(1000), b2 = rnorm(1000), # beta1 and beta 2
+  year = rep(1:20, each = 50),
+  f_year = as.factor(rep(1:20, each = 50)) # for random intercept
+)
+
+# mesh
+true_mesh <- make_mesh(true_data, xy_cols = c("X", "Y"), type='kmeans',n_knots = 300)
+
+plot(true_mesh)
+
+# data-generating model
+sim_data <- sdmTMB_simulate(
+  formula = ~ 1 + b1 + b2 + (1|f_year), # data generating formula
+  data = true_data,
+  time = "year",
+  mesh = true_mesh,
+  family = tweedie(),
+  range = 0.5, # true matern range
+  sigma_O = 0.7, # true spatial sd
+  phi = 0.9, # the tweedie param
+  B = c(0.2, -0.4, 0.3) # true betas
+)
+# see https://pbs-assess.github.io/sdmTMB/ for synatx details
+
+sim_data$f_year <- as.factor(sim_data$year)
+
+```
+
+## We now fit the model with the full data
+
+```{r}
+# first a mesh
+mesh_full <- make_mesh(sim_data, xy_cols = c("X", "Y"), type='kmeans',n_knots = 300)
+plot(mesh_full)
+
+# now the model
+m_full=sdmTMB(observed ~ 1 + b1 + b2 + (1|f_year),
+              data = sim_data, mesh = mesh_full, time = "year",spatiotemporal = 'off',
+              family = tweedie())
+
+summary(m_full)
+```
+
+## We remove some data
+
+Here we remove some hauls from some years
+
+```{r}
+# creating the spatial cluster
+sim_data$clust <- kmeans(sim_data[, c("X", "Y")], 4)$cluster # we have now 4 spatial clusters
+
+# we remove some clusters from some year
+sim_data_missing=sim_data %>% filter(!(clust == 1 & year %in% c(1,10)) & !(clust == 4 & year %in% c(2,5,7)) & !(clust == 3 & year %in% c(12,15,16,20))& !(clust == 2 & year %in% c(15,3,6)) )
+# we dropped ~15 % of the hauls
+
+ggplot()+geom_point(data=sim_data,aes(X,Y),color='red')+geom_point(data=sim_data_missing,aes(X,Y),color='black')+facet_wrap(~year)+ggtitle('in red the hauls removed')
+
+```
+
+
+```{r}
+# sim_data_missing=sim_data %>% filter(!(X<0.6 & year==1) & !(X<0.6 & year==15) & !(X<0.6 & year==5))
+```
+
+## We refit the model using the dataset with the missing values
+
+```{r}
+# first a mesh
+mesh_missing <- make_mesh(sim_data_missing, xy_cols = c("X", "Y"), type='kmeans',n_knots = 300)
+plot(mesh_missing)
+
+# now the model
+m_missing=sdmTMB(observed ~ 1 + b1 + b2 + (1|f_year),
+              data = sim_data_missing, mesh = mesh_missing, time = "year",spatiotemporal = 'off',
+              family = tweedie())
+
+summary(m_missing)
+```
+
+## The models looks quite similar, let's plot the coefficients
+
+```{r}
+coeff_fx=rbind(cbind(tidy(m_full,conf.int = T),m='m_full'),cbind(tidy(m_missing,conf.int = T),m='m_missing')) # fixed effects
+
+# plot
+p1=ggplot(data= coeff_fx, aes(x = estimate, xmin = conf.low, xmax = conf.high, y = term,color=m)) +
+  geom_vline(xintercept = 0, color = "black", linetype = "longdash") +
+  geom_pointrange(position=position_dodge2(width=0.5,reverse = T),fatten=1.2) +labs(x = "Estimate", y = "Standardised coefficient" )
+
+coeff_ran=rbind(cbind(tidy(m_full,conf.int = T,effects = 'ran_pars'),m='m_full'),cbind(tidy(m_missing,conf.int = T,effects = 'ran_pars'),m='m_missing')) # random effects
+
+p2=ggplot(data= coeff_ran[!grepl(c('tweedie_p|phi|twee|range'),coeff_ran$term),], aes(x = estimate, xmin = conf.low, xmax = conf.high, y = term,color=m))  +
+  geom_vline(xintercept = 0,linetype = "longdash") +
+  geom_pointrange(position=position_dodge2(width=0.5,reverse=T),fatten = 1.2) +
+  labs(x = "Estimate", y = "Standardised coefficient")  
+
+
+p1+p2+plot_layout(guides = 'collect')
+```
