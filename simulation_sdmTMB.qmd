@@ -1,11 +1,15 @@
 ---
-title: "Simulation Withing"
+title: "Simulation Withing sdmTMB"
 author: "Federico Maioli"
 format: html
 editor: visual
+execute:
+  error: false
+  message: false
+  warning: false
 ---
 
-## Load the libraries
+Libraries
 
 ```{r}
 library(tidyverse)
@@ -14,7 +18,8 @@ library(sdmTMB)
 library(patchwork)
 ```
 
-## Simulate the dataset
+
+### Data simulation
 
 ```{r}
 set.seed(99)
@@ -22,17 +27,21 @@ set.seed(99)
 # true data
 true_data <- data.frame(
   X = runif(1000), Y = runif(1000), # coordinates
-  b1 = rnorm(1000), b2 = rnorm(1000), # beta1 and beta 2
-  year = rep(1:20, each = 50),
+  b1 = rnorm(1000), b2 = rnorm(1000), # beta1 and beta2 are two covariates
+  year = rep(1:20, each = 50), #year
   f_year = as.factor(rep(1:20, each = 50)) # for random intercept
-)
+) # it has 1k rows, in the paper we have ~ 3600
 
 # mesh
 true_mesh <- make_mesh(true_data, xy_cols = c("X", "Y"), type='kmeans',n_knots = 300)
 
+# plot the mesh
 plot(true_mesh)
+```
 
-# data-generating model
+This is the data-generating model:
+
+```{r}
 sim_data <- sdmTMB_simulate(
   formula = ~ 1 + b1 + b2 + (1|f_year), # data generating formula
   data = true_data,
@@ -41,7 +50,7 @@ sim_data <- sdmTMB_simulate(
   family = tweedie(),
   range = 0.5, # true matern range
   sigma_O = 0.7, # true spatial sd
-  phi = 0.9, # the tweedie param
+  phi = 0.9, #Observation error scale parameter
   B = c(0.2, -0.4, 0.3) # true betas
 )
 # see https://pbs-assess.github.io/sdmTMB/ for synatx details
@@ -50,7 +59,9 @@ sim_data$f_year <- as.factor(sim_data$year)
 
 ```
 
-## We now fit the model with the full data
+### Fitting the model with the full dataset
+
+We now fit the model exploiting the full dataset
 
 ```{r}
 # first a mesh
@@ -58,16 +69,15 @@ mesh_full <- make_mesh(sim_data, xy_cols = c("X", "Y"), type='kmeans',n_knots = 
 plot(mesh_full)
 
 # now the model
-m_full=sdmTMB(observed ~ 1 + b1 + b2 + (1|f_year),
-              data = sim_data, mesh = mesh_full, time = "year",spatiotemporal = 'off',
-              family = tweedie())
+m_full=sdmTMB(observed ~ 1 + b1 + b2 + (1|f_year), data = sim_data, mesh = mesh_full, time = "year",spatiotemporal = 'off',family = tweedie())
 
-summary(m_full)
+summary(m_full) # parameters estimate
 ```
 
-## We remove some data
 
-Here we remove some hauls from some years
+### Removing data
+
+We remove some data from the simulated dataset. We dropped ~15 % of the hauls.
 
 ```{r}
 # creating the spatial cluster
@@ -75,33 +85,35 @@ sim_data$clust <- kmeans(sim_data[, c("X", "Y")], 4)$cluster # we have now 4 spa
 
 # we remove some clusters from some year
 sim_data_missing=sim_data %>% filter(!(clust == 1 & year %in% c(1,10)) & !(clust == 4 & year %in% c(2,5,7)) & !(clust == 3 & year %in% c(12,15,16,20))& !(clust == 2 & year %in% c(15,3,6)) )
-# we dropped ~15 % of the hauls
+#  ~15 % of the hauls are removed
 
-ggplot()+geom_point(data=sim_data,aes(X,Y),color='red')+geom_point(data=sim_data_missing,aes(X,Y),color='black')+facet_wrap(~year)+ggtitle('in red the hauls removed')
+ggplot()+geom_point(data=sim_data,aes(X,Y),color='red')+geom_point(data=sim_data_missing,aes(X,Y),color='black')+facet_wrap(~year)+ggtitle('in red the hauls removed') # plot the hauls removed
 
 ```
 
+### Reffiting the model on the subset of data
 
-```{r}
-# sim_data_missing=sim_data %>% filter(!(X<0.6 & year==1) & !(X<0.6 & year==15) & !(X<0.6 & year==5))
-```
-
-## We refit the model using the dataset with the missing values
+We refit the same model on the subsetted data:
 
 ```{r}
 # first a mesh
-mesh_missing <- make_mesh(sim_data_missing, xy_cols = c("X", "Y"), type='kmeans',n_knots = 300)
-plot(mesh_missing)
+mesh_missing <- make_mesh(sim_data_missing, xy_cols = c("X", "Y"), type='kmeans',n_knots = 300) # we need a new mesh
 
-# now the model
-m_missing=sdmTMB(observed ~ 1 + b1 + b2 + (1|f_year),
-              data = sim_data_missing, mesh = mesh_missing, time = "year",spatiotemporal = 'off',
-              family = tweedie())
+plot(mesh_missing) # plot the new mesh
 
-summary(m_missing)
+m_missing = sdmTMB(
+  observed ~ 1 + b1 + b2 + (1 | f_year),
+  data = sim_data_missing,
+  mesh = mesh_missing,
+  time = "year",
+  spatiotemporal = 'off',
+  family = tweedie()
+) # refit the model with less data
+
+summary(m_missing) # check the parameters
 ```
 
-## The models looks quite similar, let's plot the coefficients
+### We compare the two models
 
 ```{r}
 coeff_fx=rbind(cbind(tidy(m_full,conf.int = T),m='m_full'),cbind(tidy(m_missing,conf.int = T),m='m_missing')) # fixed effects
@@ -115,9 +127,10 @@ coeff_ran=rbind(cbind(tidy(m_full,conf.int = T,effects = 'ran_pars'),m='m_full')
 
 p2=ggplot(data= coeff_ran[!grepl(c('tweedie_p|phi|twee|range'),coeff_ran$term),], aes(x = estimate, xmin = conf.low, xmax = conf.high, y = term,color=m))  +
   geom_vline(xintercept = 0,linetype = "longdash") +
-  geom_pointrange(position=position_dodge2(width=0.5,reverse=T),fatten = 1.2) +
-  labs(x = "Estimate", y = "Standardised coefficient")  
+  geom_pointrange(position=position_dodge2(width=0.5,reverse=T),fatten = 1.2) + labs(x = "Estimate", y = "Standardised coefficient")  
 
 
 p1+p2+plot_layout(guides = 'collect')
 ```
+
+The to models show very similar results, despite the second being fitted on 15 % less data. 

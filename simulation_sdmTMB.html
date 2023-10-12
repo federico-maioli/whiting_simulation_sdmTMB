@@ -8,7 +8,7 @@
 
 <meta name="author" content="Federico Maioli">
 
-<title>Simulation Withing</title>
+<title>Simulation Withing sdmTMB</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -109,7 +109,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Simulation Withing</h1>
+<h1 class="title">Simulation Withing sdmTMB</h1>
 </div>
 
 
@@ -129,108 +129,67 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 </header>
 
-<section id="load-the-libraries" class="level2">
-<h2 class="anchored" data-anchor-id="load-the-libraries">Load the libraries</h2>
+<p>Libraries</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-✔ dplyr     1.1.2     ✔ readr     2.1.4
-✔ forcats   1.0.0     ✔ stringr   1.5.0
-✔ ggplot2   3.4.2     ✔ tibble    3.2.1
-✔ lubridate 1.9.2     ✔ tidyr     1.3.0
-✔ purrr     1.0.1     
-── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-✖ dplyr::filter() masks stats::filter()
-✖ dplyr::lag()    masks stats::lag()
-ℹ Use the ]8;;http://conflicted.r-lib.org/conflicted package]8;; to force all conflicts to become errors</code></pre>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidylog)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sdmTMB)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidylog)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>
-Attaching package: 'tidylog'
-
-The following objects are masked from 'package:dplyr':
-
-    add_count, add_tally, anti_join, count, distinct, distinct_all,
-    distinct_at, distinct_if, filter, filter_all, filter_at, filter_if,
-    full_join, group_by, group_by_all, group_by_at, group_by_if,
-    inner_join, left_join, mutate, mutate_all, mutate_at, mutate_if,
-    relocate, rename, rename_all, rename_at, rename_if, rename_with,
-    right_join, sample_frac, sample_n, select, select_all, select_at,
-    select_if, semi_join, slice, slice_head, slice_max, slice_min,
-    slice_sample, slice_tail, summarise, summarise_all, summarise_at,
-    summarise_if, summarize, summarize_all, summarize_at, summarize_if,
-    tally, top_frac, top_n, transmute, transmute_all, transmute_at,
-    transmute_if, ungroup
-
-The following objects are masked from 'package:tidyr':
-
-    drop_na, fill, gather, pivot_longer, pivot_wider, replace_na,
-    spread, uncount
-
-The following object is masked from 'package:stats':
-
-    filter</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sdmTMB)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</section>
-<section id="simulate-the-dataset" class="level2">
-<h2 class="anchored" data-anchor-id="simulate-the-dataset">Simulate the dataset</h2>
+<section id="data-simulation" class="level3">
+<h3 class="anchored" data-anchor-id="data-simulation">Data simulation</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">99</span>)</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># true data</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>true_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">X =</span> <span class="fu">runif</span>(<span class="dv">1000</span>), <span class="at">Y =</span> <span class="fu">runif</span>(<span class="dv">1000</span>), <span class="co"># coordinates</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">b1 =</span> <span class="fu">rnorm</span>(<span class="dv">1000</span>), <span class="at">b2 =</span> <span class="fu">rnorm</span>(<span class="dv">1000</span>), <span class="co"># beta1 and beta 2</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">year =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>, <span class="at">each =</span> <span class="dv">50</span>),</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">f_year =</span> <span class="fu">as.factor</span>(<span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>, <span class="at">each =</span> <span class="dv">50</span>)) <span class="co"># for random intercept</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co"># mesh</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>true_mesh <span class="ot">&lt;-</span> <span class="fu">make_mesh</span>(true_data, <span class="at">xy_cols =</span> <span class="fu">c</span>(<span class="st">"X"</span>, <span class="st">"Y"</span>), <span class="at">type=</span><span class="st">'kmeans'</span>,<span class="at">n_knots =</span> <span class="dv">300</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>as(&lt;dgCMatrix&gt;, "dgTMatrix") is deprecated since Matrix 1.5-0; do as(., "TsparseMatrix") instead</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(true_mesh)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">99</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># true data</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>true_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">X =</span> <span class="fu">runif</span>(<span class="dv">1000</span>), <span class="at">Y =</span> <span class="fu">runif</span>(<span class="dv">1000</span>), <span class="co"># coordinates</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">b1 =</span> <span class="fu">rnorm</span>(<span class="dv">1000</span>), <span class="at">b2 =</span> <span class="fu">rnorm</span>(<span class="dv">1000</span>), <span class="co"># beta1 and beta2 are two covariates</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">year =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>, <span class="at">each =</span> <span class="dv">50</span>), <span class="co">#year</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">f_year =</span> <span class="fu">as.factor</span>(<span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>, <span class="at">each =</span> <span class="dv">50</span>)) <span class="co"># for random intercept</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>) <span class="co"># it has 1k rows, in the paper we have ~ 3600</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># mesh</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>true_mesh <span class="ot">&lt;-</span> <span class="fu">make_mesh</span>(true_data, <span class="at">xy_cols =</span> <span class="fu">c</span>(<span class="st">"X"</span>, <span class="st">"Y"</span>), <span class="at">type=</span><span class="st">'kmeans'</span>,<span class="at">n_knots =</span> <span class="dv">300</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># plot the mesh</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(true_mesh)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="simulation_sdmTMB_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
 </div>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># data-generating model</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>sim_data <span class="ot">&lt;-</span> <span class="fu">sdmTMB_simulate</span>(</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">formula =</span> <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> b1 <span class="sc">+</span> b2 <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>f_year), <span class="co"># data generating formula</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> true_data,</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">"year"</span>,</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">mesh =</span> true_mesh,</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">tweedie</span>(),</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">range =</span> <span class="fl">0.5</span>, <span class="co"># true matern range</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">sigma_O =</span> <span class="fl">0.7</span>, <span class="co"># true spatial sd</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">phi =</span> <span class="fl">0.9</span>, <span class="co"># the tweedie param</span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">B =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="sc">-</span><span class="fl">0.4</span>, <span class="fl">0.3</span>) <span class="co"># true betas</span></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="co"># see https://pbs-assess.github.io/sdmTMB/ for synatx details</span></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>sim_data<span class="sc">$</span>f_year <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(sim_data<span class="sc">$</span>year)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>This is the data-generating model:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>sim_data <span class="ot">&lt;-</span> <span class="fu">sdmTMB_simulate</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">formula =</span> <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> b1 <span class="sc">+</span> b2 <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>f_year), <span class="co"># data generating formula</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> true_data,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">"year"</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">mesh =</span> true_mesh,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">tweedie</span>(),</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">range =</span> <span class="fl">0.5</span>, <span class="co"># true matern range</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">sigma_O =</span> <span class="fl">0.7</span>, <span class="co"># true spatial sd</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">phi =</span> <span class="fl">0.9</span>, <span class="co">#Observation error scale parameter</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">B =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="sc">-</span><span class="fl">0.4</span>, <span class="fl">0.3</span>) <span class="co"># true betas</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co"># see https://pbs-assess.github.io/sdmTMB/ for synatx details</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>sim_data<span class="sc">$</span>f_year <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(sim_data<span class="sc">$</span>year)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="we-now-fit-the-model-with-the-full-data" class="level2">
-<h2 class="anchored" data-anchor-id="we-now-fit-the-model-with-the-full-data">We now fit the model with the full data</h2>
+<section id="fitting-the-model-with-the-full-dataset" class="level3">
+<h3 class="anchored" data-anchor-id="fitting-the-model-with-the-full-dataset">Fitting the model with the full dataset</h3>
+<p>We now fit the model exploiting the full dataset</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># first a mesh</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>mesh_full <span class="ot">&lt;-</span> <span class="fu">make_mesh</span>(sim_data, <span class="at">xy_cols =</span> <span class="fu">c</span>(<span class="st">"X"</span>, <span class="st">"Y"</span>), <span class="at">type=</span><span class="st">'kmeans'</span>,<span class="at">n_knots =</span> <span class="dv">300</span>)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mesh_full)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># first a mesh</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>mesh_full <span class="ot">&lt;-</span> <span class="fu">make_mesh</span>(sim_data, <span class="at">xy_cols =</span> <span class="fu">c</span>(<span class="st">"X"</span>, <span class="st">"Y"</span>), <span class="at">type=</span><span class="st">'kmeans'</span>,<span class="at">n_knots =</span> <span class="dv">300</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mesh_full)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="simulation_sdmTMB_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+<p><img src="simulation_sdmTMB_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
 </div>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># now the model</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>m_full<span class="ot">=</span><span class="fu">sdmTMB</span>(observed <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> b1 <span class="sc">+</span> b2 <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>f_year),</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> sim_data, <span class="at">mesh =</span> mesh_full, <span class="at">time =</span> <span class="st">"year"</span>,<span class="at">spatiotemporal =</span> <span class="st">'off'</span>,</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">tweedie</span>())</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m_full)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># now the model</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>m_full<span class="ot">=</span><span class="fu">sdmTMB</span>(observed <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> b1 <span class="sc">+</span> b2 <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>f_year), <span class="at">data =</span> sim_data, <span class="at">mesh =</span> mesh_full, <span class="at">time =</span> <span class="st">"year"</span>,<span class="at">spatiotemporal =</span> <span class="st">'off'</span>,<span class="at">family =</span> <span class="fu">tweedie</span>())</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m_full) <span class="co"># parameters estimate</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Spatial model fit by ML ['sdmTMB']
 Formula: observed ~ 1 + b1 + b2 + (1 | f_year)
@@ -258,44 +217,44 @@ See ?tidy.sdmTMB to extract these values as a data frame.</code></pre>
 </div>
 </div>
 </section>
-<section id="we-remove-some-data" class="level2">
-<h2 class="anchored" data-anchor-id="we-remove-some-data">We remove some data</h2>
-<p>Here we remove some hauls from some years</p>
+<section id="removing-data" class="level3">
+<h3 class="anchored" data-anchor-id="removing-data">Removing data</h3>
+<p>We remove some data from the simulated dataset. We dropped ~15 % of the hauls.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># creating the spatial cluster</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>sim_data<span class="sc">$</span>clust <span class="ot">&lt;-</span> <span class="fu">kmeans</span>(sim_data[, <span class="fu">c</span>(<span class="st">"X"</span>, <span class="st">"Y"</span>)], <span class="dv">4</span>)<span class="sc">$</span>cluster <span class="co"># we have now 4 spatial clusters</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co"># we remove some clusters from some year</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>sim_data_missing<span class="ot">=</span>sim_data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(clust <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">10</span>)) <span class="sc">&amp;</span> <span class="sc">!</span>(clust <span class="sc">==</span> <span class="dv">4</span> <span class="sc">&amp;</span> year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">5</span>,<span class="dv">7</span>)) <span class="sc">&amp;</span> <span class="sc">!</span>(clust <span class="sc">==</span> <span class="dv">3</span> <span class="sc">&amp;</span> year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">12</span>,<span class="dv">15</span>,<span class="dv">16</span>,<span class="dv">20</span>))<span class="sc">&amp;</span> <span class="sc">!</span>(clust <span class="sc">==</span> <span class="dv">2</span> <span class="sc">&amp;</span> year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">15</span>,<span class="dv">3</span>,<span class="dv">6</span>)) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>filter: removed 150 rows (15%), 850 rows remaining</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we dropped ~15 % of the hauls</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>()<span class="sc">+</span><span class="fu">geom_point</span>(<span class="at">data=</span>sim_data,<span class="fu">aes</span>(X,Y),<span class="at">color=</span><span class="st">'red'</span>)<span class="sc">+</span><span class="fu">geom_point</span>(<span class="at">data=</span>sim_data_missing,<span class="fu">aes</span>(X,Y),<span class="at">color=</span><span class="st">'black'</span>)<span class="sc">+</span><span class="fu">facet_wrap</span>(<span class="sc">~</span>year)<span class="sc">+</span><span class="fu">ggtitle</span>(<span class="st">'in red the hauls removed'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># creating the spatial cluster</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>sim_data<span class="sc">$</span>clust <span class="ot">&lt;-</span> <span class="fu">kmeans</span>(sim_data[, <span class="fu">c</span>(<span class="st">"X"</span>, <span class="st">"Y"</span>)], <span class="dv">4</span>)<span class="sc">$</span>cluster <span class="co"># we have now 4 spatial clusters</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># we remove some clusters from some year</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>sim_data_missing<span class="ot">=</span>sim_data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(clust <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">10</span>)) <span class="sc">&amp;</span> <span class="sc">!</span>(clust <span class="sc">==</span> <span class="dv">4</span> <span class="sc">&amp;</span> year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">5</span>,<span class="dv">7</span>)) <span class="sc">&amp;</span> <span class="sc">!</span>(clust <span class="sc">==</span> <span class="dv">3</span> <span class="sc">&amp;</span> year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">12</span>,<span class="dv">15</span>,<span class="dv">16</span>,<span class="dv">20</span>))<span class="sc">&amp;</span> <span class="sc">!</span>(clust <span class="sc">==</span> <span class="dv">2</span> <span class="sc">&amp;</span> year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">15</span>,<span class="dv">3</span>,<span class="dv">6</span>)) )</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co">#  ~15 % of the hauls are removed</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>()<span class="sc">+</span><span class="fu">geom_point</span>(<span class="at">data=</span>sim_data,<span class="fu">aes</span>(X,Y),<span class="at">color=</span><span class="st">'red'</span>)<span class="sc">+</span><span class="fu">geom_point</span>(<span class="at">data=</span>sim_data_missing,<span class="fu">aes</span>(X,Y),<span class="at">color=</span><span class="st">'black'</span>)<span class="sc">+</span><span class="fu">facet_wrap</span>(<span class="sc">~</span>year)<span class="sc">+</span><span class="fu">ggtitle</span>(<span class="st">'in red the hauls removed'</span>) <span class="co"># plot the hauls removed</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="simulation_sdmTMB_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+<p><img src="simulation_sdmTMB_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
 </div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># sim_data_missing=sim_data %&gt;% filter(!(X&lt;0.6 &amp; year==1) &amp; !(X&lt;0.6 &amp; year==15) &amp; !(X&lt;0.6 &amp; year==5))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="we-refit-the-model-using-the-dataset-with-the-missing-values" class="level2">
-<h2 class="anchored" data-anchor-id="we-refit-the-model-using-the-dataset-with-the-missing-values">We refit the model using the dataset with the missing values</h2>
+<section id="reffiting-the-model-on-the-subset-of-data" class="level3">
+<h3 class="anchored" data-anchor-id="reffiting-the-model-on-the-subset-of-data">Reffiting the model on the subset of data</h3>
+<p>We refit the same model on the subsetted data:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># first a mesh</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>mesh_missing <span class="ot">&lt;-</span> <span class="fu">make_mesh</span>(sim_data_missing, <span class="at">xy_cols =</span> <span class="fu">c</span>(<span class="st">"X"</span>, <span class="st">"Y"</span>), <span class="at">type=</span><span class="st">'kmeans'</span>,<span class="at">n_knots =</span> <span class="dv">300</span>)</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mesh_missing)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># first a mesh</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>mesh_missing <span class="ot">&lt;-</span> <span class="fu">make_mesh</span>(sim_data_missing, <span class="at">xy_cols =</span> <span class="fu">c</span>(<span class="st">"X"</span>, <span class="st">"Y"</span>), <span class="at">type=</span><span class="st">'kmeans'</span>,<span class="at">n_knots =</span> <span class="dv">300</span>) <span class="co"># we need a new mesh</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mesh_missing) <span class="co"># plot the new mesh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="simulation_sdmTMB_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
 </div>
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># now the model</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>m_missing<span class="ot">=</span><span class="fu">sdmTMB</span>(observed <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> b1 <span class="sc">+</span> b2 <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>f_year),</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> sim_data_missing, <span class="at">mesh =</span> mesh_missing, <span class="at">time =</span> <span class="st">"year"</span>,<span class="at">spatiotemporal =</span> <span class="st">'off'</span>,</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">tweedie</span>())</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m_missing)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m_missing <span class="ot">=</span> <span class="fu">sdmTMB</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  observed <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> b1 <span class="sc">+</span> b2 <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">|</span> f_year),</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> sim_data_missing,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">mesh =</span> mesh_missing,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">time =</span> <span class="st">"year"</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">spatiotemporal =</span> <span class="st">'off'</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">tweedie</span>()</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>) <span class="co"># refit the model with less data</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m_missing) <span class="co"># check the parameters</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Spatial model fit by ML ['sdmTMB']
 Formula: observed ~ 1 + b1 + b2 + (1 | f_year)
@@ -323,29 +282,29 @@ See ?tidy.sdmTMB to extract these values as a data frame.</code></pre>
 </div>
 </div>
 </section>
-<section id="the-models-looks-quite-similar-lets-plot-the-coefficients" class="level2">
-<h2 class="anchored" data-anchor-id="the-models-looks-quite-similar-lets-plot-the-coefficients">The models looks quite similar, let’s plot the coefficients</h2>
+<section id="we-compare-the-two-models" class="level3">
+<h3 class="anchored" data-anchor-id="we-compare-the-two-models">We compare the two models</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>coeff_fx<span class="ot">=</span><span class="fu">rbind</span>(<span class="fu">cbind</span>(<span class="fu">tidy</span>(m_full,<span class="at">conf.int =</span> T),<span class="at">m=</span><span class="st">'m_full'</span>),<span class="fu">cbind</span>(<span class="fu">tidy</span>(m_missing,<span class="at">conf.int =</span> T),<span class="at">m=</span><span class="st">'m_missing'</span>)) <span class="co"># fixed effects</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="co"># plot</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>p1<span class="ot">=</span><span class="fu">ggplot</span>(<span class="at">data=</span> coeff_fx, <span class="fu">aes</span>(<span class="at">x =</span> estimate, <span class="at">xmin =</span> conf.low, <span class="at">xmax =</span> conf.high, <span class="at">y =</span> term,<span class="at">color=</span>m)) <span class="sc">+</span></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">color =</span> <span class="st">"black"</span>, <span class="at">linetype =</span> <span class="st">"longdash"</span>) <span class="sc">+</span></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointrange</span>(<span class="at">position=</span><span class="fu">position_dodge2</span>(<span class="at">width=</span><span class="fl">0.5</span>,<span class="at">reverse =</span> T),<span class="at">fatten=</span><span class="fl">1.2</span>) <span class="sc">+</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Estimate"</span>, <span class="at">y =</span> <span class="st">"Standardised coefficient"</span> )</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>coeff_ran<span class="ot">=</span><span class="fu">rbind</span>(<span class="fu">cbind</span>(<span class="fu">tidy</span>(m_full,<span class="at">conf.int =</span> T,<span class="at">effects =</span> <span class="st">'ran_pars'</span>),<span class="at">m=</span><span class="st">'m_full'</span>),<span class="fu">cbind</span>(<span class="fu">tidy</span>(m_missing,<span class="at">conf.int =</span> T,<span class="at">effects =</span> <span class="st">'ran_pars'</span>),<span class="at">m=</span><span class="st">'m_missing'</span>)) <span class="co"># random effects</span></span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>p2<span class="ot">=</span><span class="fu">ggplot</span>(<span class="at">data=</span> coeff_ran[<span class="sc">!</span><span class="fu">grepl</span>(<span class="fu">c</span>(<span class="st">'tweedie_p|phi|twee|range'</span>),coeff_ran<span class="sc">$</span>term),], <span class="fu">aes</span>(<span class="at">x =</span> estimate, <span class="at">xmin =</span> conf.low, <span class="at">xmax =</span> conf.high, <span class="at">y =</span> term,<span class="at">color=</span>m))  <span class="sc">+</span></span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>,<span class="at">linetype =</span> <span class="st">"longdash"</span>) <span class="sc">+</span></span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointrange</span>(<span class="at">position=</span><span class="fu">position_dodge2</span>(<span class="at">width=</span><span class="fl">0.5</span>,<span class="at">reverse=</span>T),<span class="at">fatten =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Estimate"</span>, <span class="at">y =</span> <span class="st">"Standardised coefficient"</span>)  </span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>p1<span class="sc">+</span>p2<span class="sc">+</span><span class="fu">plot_layout</span>(<span class="at">guides =</span> <span class="st">'collect'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>coeff_fx<span class="ot">=</span><span class="fu">rbind</span>(<span class="fu">cbind</span>(<span class="fu">tidy</span>(m_full,<span class="at">conf.int =</span> T),<span class="at">m=</span><span class="st">'m_full'</span>),<span class="fu">cbind</span>(<span class="fu">tidy</span>(m_missing,<span class="at">conf.int =</span> T),<span class="at">m=</span><span class="st">'m_missing'</span>)) <span class="co"># fixed effects</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># plot</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>p1<span class="ot">=</span><span class="fu">ggplot</span>(<span class="at">data=</span> coeff_fx, <span class="fu">aes</span>(<span class="at">x =</span> estimate, <span class="at">xmin =</span> conf.low, <span class="at">xmax =</span> conf.high, <span class="at">y =</span> term,<span class="at">color=</span>m)) <span class="sc">+</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">color =</span> <span class="st">"black"</span>, <span class="at">linetype =</span> <span class="st">"longdash"</span>) <span class="sc">+</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointrange</span>(<span class="at">position=</span><span class="fu">position_dodge2</span>(<span class="at">width=</span><span class="fl">0.5</span>,<span class="at">reverse =</span> T),<span class="at">fatten=</span><span class="fl">1.2</span>) <span class="sc">+</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Estimate"</span>, <span class="at">y =</span> <span class="st">"Standardised coefficient"</span> )</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>coeff_ran<span class="ot">=</span><span class="fu">rbind</span>(<span class="fu">cbind</span>(<span class="fu">tidy</span>(m_full,<span class="at">conf.int =</span> T,<span class="at">effects =</span> <span class="st">'ran_pars'</span>),<span class="at">m=</span><span class="st">'m_full'</span>),<span class="fu">cbind</span>(<span class="fu">tidy</span>(m_missing,<span class="at">conf.int =</span> T,<span class="at">effects =</span> <span class="st">'ran_pars'</span>),<span class="at">m=</span><span class="st">'m_missing'</span>)) <span class="co"># random effects</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>p2<span class="ot">=</span><span class="fu">ggplot</span>(<span class="at">data=</span> coeff_ran[<span class="sc">!</span><span class="fu">grepl</span>(<span class="fu">c</span>(<span class="st">'tweedie_p|phi|twee|range'</span>),coeff_ran<span class="sc">$</span>term),], <span class="fu">aes</span>(<span class="at">x =</span> estimate, <span class="at">xmin =</span> conf.low, <span class="at">xmax =</span> conf.high, <span class="at">y =</span> term,<span class="at">color=</span>m))  <span class="sc">+</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>,<span class="at">linetype =</span> <span class="st">"longdash"</span>) <span class="sc">+</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointrange</span>(<span class="at">position=</span><span class="fu">position_dodge2</span>(<span class="at">width=</span><span class="fl">0.5</span>,<span class="at">reverse=</span>T),<span class="at">fatten =</span> <span class="fl">1.2</span>) <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Estimate"</span>, <span class="at">y =</span> <span class="st">"Standardised coefficient"</span>)  </span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>p1<span class="sc">+</span>p2<span class="sc">+</span><span class="fu">plot_layout</span>(<span class="at">guides =</span> <span class="st">'collect'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="simulation_sdmTMB_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
+<p>The to models show very similar results, despite the second being fitted on 15 % less data.</p>
 </section>
 
 </main>
